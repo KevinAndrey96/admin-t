@@ -1,0 +1,11 @@
+# PHP & Server Logs
+*.log
+error_log
+.env
+
+# OS and Editor Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

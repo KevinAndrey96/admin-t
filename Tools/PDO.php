@@ -1,10 +1,13 @@
 <?php 
-require_once __DIR__."/../../wp-config.php";
+$wp_config = __DIR__."/../../wp-config.php";
+if (file_exists($wp_config)) {
+    require_once $wp_config;
+}
 
-$dbname = DB_NAME;
-$host = DB_HOST;
-$username= DB_USER;
-$password = DB_PASSWORD;
+$dbname = defined('DB_NAME') ? DB_NAME : (getenv('DB_NAME') ?: 'ufun');
+$host = defined('DB_HOST') ? DB_HOST : (getenv('DB_HOST') ?: 'localhost');
+$username = defined('DB_USER') ? DB_USER : (getenv('DB_USER') ?: 'root');
+$password = defined('DB_PASSWORD') ? DB_PASSWORD : (getenv('DB_PASSWORD') ?: '');
 
 $options = array(PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8');
 try 
