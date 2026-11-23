@@ -1,26 +1,37 @@
 <?php
-require_once __DIR__."/../Tools/PDO.php";
-if($_GET)
-{
-	$dato=array();
-	$producto;
-	$ID=$_GET["ID"];
-	
-	$Q="SELECT * from wp_wc_order_product_lookup where order_id='$ID'";
-	foreach ($db->query($Q) as $Row) {
-		$pid=$Row["product_id"];
-		$producto["id"]=$pid;
-		$Q1="SELECT * from wp_posts where ID=$pid";
-		foreach ($db->query($Q1) as $Row1) {
-			$producto["nombre"]=$Row1["post_title"];
-		}
-		$producto["cantidad"]=$Row["product_qty"];
-		$producto["valor"]=$Row["product_net_revenue"];
-		array_push($dato,$producto);
-	}
+declare(strict_types=1);
 
-	echo json_encode($dato);
+require_once __DIR__ . '/../src/bootstrap.php';
 
-	
+use App\Services\AuthService;
+use App\Services\OrderService;
+
+header('Content-Type: application/json; charset=utf-8');
+
+if (!AuthService::isAuthenticated()) {
+    http_response_code(401);
+    echo json_encode(['error' => 'No autorizado']);
+    exit;
 }
-?>
+
+$id = isset($_GET['ID']) ? (int)$_GET['ID'] : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
+if ($id <= 0) {
+    http_response_code(400);
+    echo json_encode(['error' => 'ID invalido']);
+    exit;
+}
+
+$service = new OrderService();
+$items = $service->getItems($id);
+
+$output = [];
+foreach ($items as $item) {
+    $output[] = [
+        'id'       => $item['id'],
+        'nombre'   => $item['name'],
+        'cantidad' => $item['quantity'],
+        'valor'    => $item['total'],
+    ];
+}
+
+echo json_encode($output);

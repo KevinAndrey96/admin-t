@@ -1,0 +1,26 @@
+{
+  "name": "kevinandrey96/woo-php-admin-panel",
+  "description": "Modern, lightweight, and secure standalone PHP micro-admin panel and order management dashboard for WooCommerce.",
+  "type": "project",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Kevin Andrey Herrera Silva",
+      "email": "kahs_kevin@hotmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=8.1",
+    "ext-pdo": "*",
+    "ext-json": "*",
+    "ext-fileinfo": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    },
+    "files": [
+      "src/bootstrap.php"
+    ]
+  }
+}

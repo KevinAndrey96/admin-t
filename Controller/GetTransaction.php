@@ -1,68 +1,40 @@
 <?php
-require_once __DIR__."/../Tools/PDO.php";
-if($_GET)
-{
-	$dato;
-	$ID=$_GET["ID"];
-	
-	/*$Q="SELECT * from wp_posts where post_type='shop_order' and ID='$ID'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["id"]=$ID;
-	}*/
+declare(strict_types=1);
 
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_billing_first_name'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["nom"]=$Row["meta_value"];
-		break;
-	}
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_billing_last_name'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["nom"].=" ".$Row["meta_value"];
-		break;
-	}
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_billing_email'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["cor"]=$Row["meta_value"];
-		break;
-	}
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_billing_phone'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["tel"]=$Row["meta_value"];
-		break;
-	}
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_billing_address_1'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["dir"]=$Row["meta_value"];
-		break;
-	}
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_billing_postcode'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["dir"].=" (".$Row["meta_value"].")";
-		break;
-	}
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_billing_city'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["ciu"]=$Row["meta_value"];
-		break;
-	}
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_billing_state'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["ciu"].=", ".$Row["meta_value"];
-		break;
-	}
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_billing_country'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["ciu"].=" - ".$Row["meta_value"];
-		break;
-	}
-	$Q="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_customer_ip_address'";
-	foreach ($db->query($Q) as $Row) {
-		$dato["ipp"]=$Row["meta_value"];
-		break;
-	}
+require_once __DIR__ . '/../src/bootstrap.php';
 
-	echo json_encode($dato);
+use App\Services\AuthService;
+use App\Services\OrderService;
 
-	
+header('Content-Type: application/json; charset=utf-8');
+
+if (!AuthService::isAuthenticated()) {
+    http_response_code(401);
+    echo json_encode(['error' => 'No autorizado']);
+    exit;
 }
-?>
+
+$id = isset($_GET['ID']) ? (int)$_GET['ID'] : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
+if ($id <= 0) {
+    http_response_code(400);
+    echo json_encode(['error' => 'ID invalido']);
+    exit;
+}
+
+$service = new OrderService();
+$order = $service->getById($id);
+
+if (!$order) {
+    http_response_code(404);
+    echo json_encode(['error' => 'No encontrado']);
+    exit;
+}
+
+echo json_encode([
+    'nom' => $order['customer_name'],
+    'cor' => $order['email'],
+    'tel' => $order['phone'],
+    'dir' => $order['address'] . ($order['postcode'] ? ' (' . $order['postcode'] . ')' : ''),
+    'ciu' => $order['city'] . ($order['state'] ? ', ' . $order['state'] : '') . ($order['country'] ? ' - ' . $order['country'] : ''),
+    'ipp' => $order['ip'],
+]);

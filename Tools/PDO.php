@@ -1,48 +1,21 @@
-<?php 
-$wp_config = __DIR__."/../../wp-config.php";
-if (file_exists($wp_config)) {
-    require_once $wp_config;
+<?php
+declare(strict_types=1);
+
+/**
+ * Legacy PDO Connection Adapter
+ * 
+ * Provides backwards compatibility for legacy scripts by wrapping the modern Database service.
+ */
+
+require_once __DIR__ . '/../src/bootstrap.php';
+
+use App\Config\Database;
+
+try {
+    $db = Database::getPdo();
+    $Nombre_Sitio = defined('SITE_NAME') ? SITE_NAME : (getenv('APP_NAME') ?: 'WooCommerce Fast Admin');
+    $Web_Autor = 'https://github.com/KevinAndrey96/woo-php-admin-panel';
+    $Autor_Sitio = 'Kevin Andrey Herrera Silva';
+} catch (\Throwable $e) {
+    die("Database connection failed: " . $e->getMessage());
 }
-
-$dbname = defined('DB_NAME') ? DB_NAME : (getenv('DB_NAME') ?: 'ufun');
-$host = defined('DB_HOST') ? DB_HOST : (getenv('DB_HOST') ?: 'localhost');
-$username = defined('DB_USER') ? DB_USER : (getenv('DB_USER') ?: 'root');
-$password = defined('DB_PASSWORD') ? DB_PASSWORD : (getenv('DB_PASSWORD') ?: '');
-
-$options = array(PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8');
-try 
-{ 
-    $db = new PDO("mysql:host={$host};dbname={$dbname};charset=utf8", $username, $password, $options); 
-} 
-catch(PDOException $ex) 
-{ 
-    die("Failed to connect to the database: " . $ex->getMessage()); 
-} 
-
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); 
-$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC); 
-
-if(function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) 
-{ 
-    function undo_magic_quotes_gpc(&$array) 
-    { 
-        foreach($array as &$value) 
-        { 
-            if(is_array($value)) 
-            { 
-                undo_magic_quotes_gpc($value); 
-            } 
-            else 
-            { 
-                $value = stripslashes($value); 
-            } 
-        } 
-    } 
-
-    undo_magic_quotes_gpc($_POST); 
-    undo_magic_quotes_gpc($_GET); 
-    undo_magic_quotes_gpc($_COOKIE); 
-} 
-@header('Content-Type: text/html; charset=utf-8');
-
-?>

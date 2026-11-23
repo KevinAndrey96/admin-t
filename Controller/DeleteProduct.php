@@ -1,25 +1,27 @@
 <?php
-require_once __DIR__."/../Tools/PDO.php";
-if($_POST)
-{
-	$ID=$_POST["ID"];
-	$Q="DELETE from wp_posts where ID=$ID";
-	$db->query($Q);
+declare(strict_types=1);
 
-    $Q="DELETE FROM `wp_postmeta` where post_id=$ID";
-    $db->query($Q);
+require_once __DIR__ . '/../src/bootstrap.php';
 
-	//deleteAll( "../../Files/".$USER);
+use App\Services\AuthService;
+use App\Services\ProductService;
 
-    $Q="DELETE FROM `wp_term_relationships` where object_id=$ID";
-    $db->query($Q);
+AuthService::requireAuth();
 
-
-	?>
-	<script type="text/javascript">
-		window.alert("Producto eliminado con éxito");
-		window.location.href="../dashboard.php";
-	</script>
-	<?php
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = (int)($_POST['ID'] ?? ($_POST['id'] ?? 0));
+    if ($id > 0) {
+        try {
+            $service = new ProductService();
+            $service->delete($id);
+            header('Location: ../dashboard.php?success=deleted');
+            exit;
+        } catch (\Throwable $e) {
+            header('Location: ../dashboard.php?error=' . urlencode($e->getMessage()));
+            exit;
+        }
+    }
 }
-?>
+
+header('Location: ../dashboard.php');
+exit;

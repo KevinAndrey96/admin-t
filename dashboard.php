@@ -1,535 +1,395 @@
 <?php
-require_once "Layouts/Header.php";
-?>
-<link rel="stylesheet" href="assets/css/lib/datatable/dataTables.bootstrap.min.css">
-<div class="content">
-  <div class="animated fadeIn">
-    <div class="row">
+declare(strict_types=1);
 
-      <div class="col-md-12">
+require_once __DIR__ . '/Layouts/Header.php';
+
+use App\Services\OrderService;
+use App\Services\ProductService;
+
+$productService = new ProductService();
+$orderService = new OrderService();
+
+$stats = $orderService->getStats();
+$totalProducts = $productService->countProducts();
+$products = $productService->getAll(300);
+$mediaList = $productService->getMediaList(60);
+?>
+
+<!-- Metric KPI Cards -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-lg-3 mb-3">
+        <div class="card stat-card bg-white p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase font-weight-bold">Ventas Totales</span>
+                    <h3 class="font-weight-bold text-dark mt-1 mb-0"><?=format_currency($stats['total_sales'])?></h3>
+                </div>
+                <div class="rounded-circle bg-success text-white p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa fa-dollar font-20"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3 mb-3">
+        <div class="card stat-card bg-white p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase font-weight-bold">Total Pedidos</span>
+                    <h3 class="font-weight-bold text-dark mt-1 mb-0"><?=$stats['total_orders']?></h3>
+                </div>
+                <div class="rounded-circle bg-primary text-white p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa fa-shopping-cart font-20"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3 mb-3">
+        <div class="card stat-card bg-white p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase font-weight-bold">Pendientes / Espera</span>
+                    <h3 class="font-weight-bold text-warning mt-1 mb-0"><?=$stats['pending_orders']?></h3>
+                </div>
+                <div class="rounded-circle bg-warning text-white p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa fa-clock-o font-20"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3 mb-3">
+        <div class="card stat-card bg-white p-3 h-100">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase font-weight-bold">Productos Activos</span>
+                    <h3 class="font-weight-bold text-dark mt-1 mb-0"><?=$totalProducts?></h3>
+                </div>
+                <div class="rounded-circle bg-info text-white p-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                    <i class="fa fa-cube font-20"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Products Table Card -->
+<div class="row">
+    <div class="col-12">
         <div class="card">
-          <div class="card-header">
-            <strong class="card-title">Productos</strong>
-          </div>
-          <div class="card-body">
-            <table id="bootstrap-data-table" class="table table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Foto</th>
-                  <th>Nombre</th>
-                  <th>Categorias</th>
-                  <th>Precio</th>
-                  <th>Descripción Corta</th>
-                  <th>Opciones</th>
-                </tr>
-              </thead>
-              <tbody>
-               <?php
-               $Q="SELECT * from wp_posts where post_status='publish' and post_type='product'";
-               $ccc=0;
-               foreach ($db->query($Q) as $Row) {
-                $ID=$Row["ID"];
-                if($ccc==0)
-                {
-                 $ccc=1;
-                 $Primero=$ID;
-               }
-               ?>
-               <tr>
-                <td><?=$ID?></td>
-                <td>
-                 <?php
-                 $Q2="SELECT * FROM `wp_postmeta` WHERE `post_id`='$ID' and meta_key='_thumbnail_id'";
-                 foreach ($db->query($Q2) as $Row2) {
-                  $FotoID=$Row2["meta_value"];
-                  $Q1="SELECT * from wp_posts where ID='$FotoID'";
-                  foreach ($db->query($Q1) as $Row1) {
-                    ?>
-                    <img src="<?=$Row1['guid']?>" heigth="50px" width="50px">
-                    <?php
-                  }
-                }
+            <div class="card-header d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center">
+                    <i class="fa fa-cubes text-primary mr-2 font-18"></i>
+                    <h5 class="mb-0 font-weight-bold">Catalogo de Productos</h5>
+                </div>
+                <div>
+                    <button class="btn btn-outline-secondary btn-sm mr-2" data-toggle="collapse" data-target="#collapseUpload">
+                        <i class="fa fa-cloud-upload mr-1"></i> Subir Imagenes
+                    </button>
+                    <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#modalAddProduct">
+                        <i class="fa fa-plus mr-1"></i> Nuevo Producto
+                    </button>
+                </div>
+            </div>
 
-                ?>
-              </td>  
-              <td><a href="<?=$Row["guid"]?>"><?=$Row["post_title"]?></a></td>
-              <td>
-               <?php
-               $Q1="SELECT * from wp_term_relationships where object_id='$ID'";
-               foreach ($db->query($Q1) as $Row1) {
-                $term_taxonomy_id=$Row1["term_taxonomy_id"];
-                $Q2="SELECT * from wp_terms where term_id = '$term_taxonomy_id' and name!='simple' and name!='featured'";
-                foreach ($db->query($Q2) as $Row2) {
-                 echo $Row2["name"].", ";
-               }
-             }
-             ?>
-           </td>
-           <td>
-             <?php
-             $Q1="SELECT * from wp_postmeta where post_id='$ID' and meta_key='_price'";
-             foreach ($db->query($Q1) as $Row1) {
-              echo money_format('%i',$Row1["meta_value"]);
+            <!-- Upload Dropzone Accordion -->
+            <div class="collapse border-bottom p-4 bg-light" id="collapseUpload">
+                <h6 class="font-weight-bold mb-2"><i class="fa fa-image mr-1"></i> Subir Imagenes al Repositorio de Medios</h6>
+                <p class="text-muted small mb-3">Las imagenes subidas quedaran registradas en la biblioteca de WordPress y estaran disponibles para asociar como foto de producto.</p>
+                <form action="api/upload.php" class="dropzone" id="productDropzone">
+                    <div class="dz-message text-center py-4">
+                        <i class="fa fa-cloud-upload fa-3x text-muted mb-2"></i>
+                        <h5>Arrastra tus imagenes aqui o haz clic para examinar</h5>
+                        <span class="text-muted small">Formatos soportados: JPG, PNG, WEBP (Max 10MB)</span>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="productsTable" class="table table-hover align-middle w-100">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px;">ID</th>
+                                <th style="width: 70px;">Foto</th>
+                                <th>Nombre</th>
+                                <th>Categorias</th>
+                                <th style="width: 120px;">Precio</th>
+                                <th>Descripcion Corta</th>
+                                <th style="width: 130px;" class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($products as $prod): ?>
+                                <tr>
+                                    <td class="font-weight-bold text-muted">#<?=$prod['ID']?></td>
+                                    <td>
+                                        <?php if (!empty($prod['thumbnail_url'])): ?>
+                                            <img src="<?=e($prod['thumbnail_url'])?>" alt="Thumb" class="rounded border" style="width: 48px; height: 48px; object-fit: cover;">
+                                        <?php else: ?>
+                                            <div class="rounded border bg-light d-flex align-items-center justify-content-center text-muted" style="width: 48px; height: 48px;">
+                                                <i class="fa fa-image"></i>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <strong><?=e($prod['post_title'])?></strong>
+                                        <?php if (!empty($prod['guid'])): ?>
+                                            <div>
+                                                <a href="<?=e($prod['guid'])?>" target="_blank" rel="noopener" class="small text-muted">
+                                                    <i class="fa fa-external-link mr-1"></i>Ver en tienda
+                                                </a>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (!empty($prod['categories'])): ?>
+                                            <?php foreach (explode(',', $prod['categories']) as $cat): ?>
+                                                <span class="badge badge-light border text-secondary mb-1"><?=e(trim($cat))?></span>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <span class="text-muted small">Sin categoria</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="font-weight-bold text-dark">
+                                        <?=format_currency($prod['price'])?>
+                                    </td>
+                                    <td class="text-muted small">
+                                        <?=e(mb_strimwidth($prod['post_excerpt'] ?: strip_tags($prod['post_content']), 0, 80, '...'))?>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary btn-edit mr-1" data-id="<?=$prod['ID']?>" title="Editar Producto">
+                                            <i class="fa fa-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger btn-delete" data-id="<?=$prod['ID']?>" data-name="<?=e($prod['post_title'])?>" title="Eliminar Producto">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add Product -->
+<div class="modal fade" id="modalAddProduct" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title font-weight-bold"><i class="fa fa-plus-circle mr-2"></i>Crear Nuevo Producto</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="Controller/AddProduct.php" method="POST">
+                <?=csrf_field()?>
+                <div class="modal-body p-4">
+                    <div class="form-row">
+                        <div class="form-group col-md-8">
+                            <label class="font-weight-bold small">Nombre del Producto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="NAME" placeholder="Ej: Camiseta Oversize Negra" required>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="font-weight-bold small">Precio (COP/USD) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control" name="PRICE" placeholder="Ej: 85000" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-bold small">Imagen Destacada</label>
+                        <select name="FOTO" class="form-control">
+                            <option value="0">Seleccionar imagen de la biblioteca...</option>
+                            <?php foreach ($mediaList as $media): ?>
+                                <option value="<?=$media['ID']?>">#<?=$media['ID']?> - <?=e($media['post_title'])?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="form-text text-muted">Puedes subir nuevas fotos usando el modulo de carga superior.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-bold small">Descripcion Corta</label>
+                        <input type="text" class="form-control" name="SHORT" placeholder="Resumen breve para listados y tarjetas">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-bold small">Descripcion Detallada</label>
+                        <textarea class="form-control" name="LONG" rows="4" placeholder="Caracteristicas, materiales, medidas, etc."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa fa-check mr-1"></i> Guardar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Product -->
+<div class="modal fade" id="modalEditProduct" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title font-weight-bold"><i class="fa fa-pencil mr-2"></i>Editar Producto</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="Controller/UpdateProduct.php" method="POST" id="formEditProduct">
+                <?=csrf_field()?>
+                <input type="hidden" name="IDENTIFICADOR" id="edit_id">
+                <div class="modal-body p-4">
+                    <div class="form-row">
+                        <div class="form-group col-md-8">
+                            <label class="font-weight-bold small">Nombre del Producto <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="NAME" id="edit_name" required>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label class="font-weight-bold small">Precio <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" class="form-control" name="PRICE" id="edit_price" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-bold small">Imagen Destacada</label>
+                        <select name="FOTO" id="edit_photo" class="form-control">
+                            <option value="0">Sin imagen</option>
+                            <?php foreach ($mediaList as $media): ?>
+                                <option value="<?=$media['ID']?>">#<?=$media['ID']?> - <?=e($media['post_title'])?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-bold small">Descripcion Corta</label>
+                        <input type="text" class="form-control" name="SHORT" id="edit_short">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="font-weight-bold small">Descripcion Detallada</label>
+                        <textarea class="form-control" name="LONG" id="edit_long" rows="4"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-dark"><i class="fa fa-save mr-1"></i> Actualizar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Delete Form -->
+<form id="formDeleteProduct" action="Controller/DeleteProduct.php" method="POST" style="display: none;">
+    <?=csrf_field()?>
+    <input type="hidden" name="ID" id="delete_id">
+</form>
+
+<?php require_once __DIR__ . '/Layouts/Footer.php'; ?>
+
+<script>
+$(document).ready(function() {
+    // Initialize DataTables
+    $('#productsTable').DataTable({
+        responsive: true,
+        order: [[0, 'desc']],
+        pageLength: 25,
+        language: {
+            search: "Buscar:",
+            lengthMenu: "Mostrar _MENU_ productos",
+            info: "Mostrando _START_ a _END_ de _TOTAL_ productos",
+            infoEmpty: "Mostrando 0 a 0 de 0 productos",
+            infoFiltered: "(filtrado de _MAX_ totales)",
+            zeroRecords: "No se encontraron productos coincidentes",
+            paginate: {
+                first: "Primero",
+                last: "Ultimo",
+                next: "Siguiente",
+                previous: "Anterior"
             }
-            ?>
-          </td>
-
-          <td><?=substr($Row["post_excerpt"], 0,60)?></td>
-          <td>
-
-
-            <form method="POST" action="Controller/DeleteProduct.php">
-              <input type="hidden" name="ID" value="<?=$Row["ID"]?>">
-              <input type="submit" value="Eliminar" class="btn btn-default ">
-            </form>
-            <form method="GET" action="">
-              <input type="hidden" name="ID" value="<?=$Row["ID"]?>">
-              <input type="submit" value="Editar" class="btn btn-default ">
-            </form>
-            <!--<button class="btn btn-default" onclick="funcion(<?=$ID?>)"> - Editar - </button>-->
-
-          </td>
-        </tr>
-        <?php
-      }
-      ?>
-
-    </tbody>
-  </table>
-</div>
-</div>
-</div>
-
-
-</div>
-<script type="text/javascript">
-  var thumb=0;
-  function funcion(id)
-  {
-    $.ajax({
-      url: 'Controller/GetProduct.php?ID='+id,
-      success: function(respuesta) {
-
-        var arr = JSON.parse(respuesta);
-        document.getElementById("name").value=arr["name"];
-        document.getElementById("price").value=arr["price"];
-        document.getElementById("foto").src=arr["foto"];
-        document.getElementById("short").value=arr["short"];
-        document.getElementById("long").value=arr["long"];
-        document.getElementById("IDENTIFICADOR").value=arr["id"];
-        const d=document.getElementById("IDENTIFICADOR").value
-        document.getElementById("LOGPROD").style="background-color: #f1efef;";
-        document.getElementById("EditarProd2").style="display: block;";
-
-        thumb=arr["thumb"];
-
-        var element = document.querySelector("#EditarProd2");
-        element.scrollIntoView();
-
-      },
-      error: function() {
-        console.log("No se ha podido obtener la información");
-      }
-    });
-  }
-
-
-</script>
-
-
-<div class="row">
-  <div class="col-md-6" style="display: none;">
-    <div class="card">
-      <div class="card-header">
-        <strong class="card-title">Files</strong>
-      </div>
-      <div class="card-body">
-        <select class="form-control">
-          <?php
-          foreach ($db->query($Q) as $Row) {
-            ?>
-            <option value="<?=$Row['email']?>"><?=$Row['name']?></option>
-            <?php
-          }
-          ?>
-        </select>
-        <br>
-
-        
-
-
-      </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header">
-        <strong class="card-title">Nuevo Producto</strong>
-      </div>
-      <div class="card-body">
-        <div class="login-form">
-          <form action="Controller/AddProduct.php" method="POST">
-            <div class="form-group">
-              <label>Nombre</label>
-              <input type="text" class="form-control" name="NAME" placeholder="Nombre" required>
-            </div>
-            <div style="display: none;" class="form-group">
-              <label>Categorias</label>
-              <br>
-              <select  title="Categorias" class="selectpicker form-control" name="CATEGORIES[]" multiple> 
-                <?php
-                $Q="SELECT * from wp_wc_category_lookup where category_tree_id = category_id";
-                foreach ($db->query($Q) as $Row) {
-                  $tid=$Row["category_id"];
-                  $Q1="SELECT * from wp_terms where term_id=$tid";
-                  foreach ($db->query($Q1) as $Row1) {
-                    ?>
-                    <option value="<?=$tid?>"><?=$Row1["name"]?></option>
-                    <?php
-                  }
-                }
-                ?>
-              </select>
-
-
-            </div>
-            <div class="form-group">
-              <label>Categorias</label>
-              <br>
-              <select  title="Categorias" class="selectpicker form-control" name="CATEGORIES[]" multiple> 
-                <?php
-                $taxonomy     = 'product_cat';
-                $orderby      = 'name';  
-  $show_count   = 0;      // 1 for yes, 0 for no
-  $pad_counts   = 0;      // 1 for yes, 0 for no
-  $hierarchical = 1;      // 1 for yes, 0 for no  
-  $title        = '';  
-  $empty        = 0;
-
-  $args = array(
-   'taxonomy'     => $taxonomy,
-   'orderby'      => $orderby,
-   'show_count'   => $show_count,
-   'pad_counts'   => $pad_counts,
-   'hierarchical' => $hierarchical,
-   'title_li'     => $title,
-   'hide_empty'   => $empty
- );
-  $all_categories = get_categories( $args );
-  foreach ($all_categories as $cat) {
-    if($cat->category_parent == 0) {
-      $category_id = $cat->term_id;       
-      /*echo '<br /><a href="'. get_term_link($cat->slug, 'product_cat') .'">'. $cat->name .'</a>';*/
-      ?>
-
-      <option value="<?= $cat->term_id?>"><?=$cat->name?></option>
-
-      <?php
-
-      $args2 = array(
-        'taxonomy'     => $taxonomy,
-        'child_of'     => 0,
-        'parent'       => $category_id,
-        'orderby'      => $orderby,
-        'show_count'   => $show_count,
-        'pad_counts'   => $pad_counts,
-        'hierarchical' => $hierarchical,
-        'title_li'     => $title,
-        'hide_empty'   => $empty
-      );
-      $sub_cats = get_categories( $args2 );
-      if($sub_cats) {
-        foreach($sub_cats as $sub_category) {
-                //echo  $sub_category->name ;
-        }   
-      }
-    }       
-  }
-  ?>
-</select>
-
-
-</div>
-<div class="form-group">
-  <label>Fotografías</label>
-  <br>
-  <select title="Fotografías" class="selectpicker form-control" name="PHOTOS[]" multiple>
-    <?php
-    $Q="SELECT * FROM `wp_posts` where post_type='attachment' and ID>$Primero and (post_mime_type='image/jpeg' or post_mime_type='image/png') order by ID DESC";
-    foreach ($db->query($Q) as $Row) {
-      $Nom=$Row["post_title"];
-      $guid=$Row["guid"];
-      $id=$Row["ID"]
-
-      ?>
-      <option data-content="<img class='img-responsive' width='30px' height='30px'  src='<?=$guid?>'></img> <?=$Nom?>" value='<?=$id?>'></option>
-      <?php
-    }
-    ?>                
-  </select>
-</div>
-
-<div class="form-group">
-  <label>Precio</label>
-  <input type="number" class="form-control"  name="PRICE" placeholder="Precio" required>
-</div>
-<div class="form-group">
-  <label>Descripción Corta</label>
-  <input type="text" class="form-control"  name="SHORT" placeholder="Descripción Corta" required>
-</div>
-<div class="form-group">
-  <label>Descripción larga</label>
-  <textarea class="form-control" name="LONG" placeholder="Descripción Larga"></textarea>
-</div>
-
-<button type="submit" style="background-color: #b20c23" class="btn btn-success btn-flat m-b-30 m-t-30">Registrar producto</button>
-<br>
-<br>
-</form>
-</div>
-</div>
-</div>
-</div>
-
-
-
-<!--Editar GET-->
-<?php
-if($_GET["ID"])
-{
- $ID=$_GET["ID"];
- ?>
- <script type="text/javascript">
-  funcion(<?=$ID?>);
-</script>
-<div class="col-md-6">
-  <div class="card" id="EditarProd2">
-    <div class="card-header">
-      <strong class="card-title">Editar producto</strong>
-    </div>
-    <div class="card-body">
-      <div class="login-form" id="LOGPROD" >
-        <form action="Controller/UpdateProduct.php" method="POST">
-          <input type="hidden" id="IDENTIFICADOR" name="IDENTIFICADOR"  value="1">
-          <div class="form-group">
-            <label>Nombre</label>
-            <input type="text" class="form-control" id="name" name="NAME" placeholder="<?=$Row0['post_title']?>" required>
-          </div>
-          <div class="form-group">
-            <label>Categorias</label>
-            <br>
-            <select  title="Categorias" class="selectpicker form-control" name="CATEGORIES[]" multiple> 
-              <?php
-              $taxonomy     = 'product_cat';
-              $orderby      = 'name';  
-  $show_count   = 0;      // 1 for yes, 0 for no
-  $pad_counts   = 0;      // 1 for yes, 0 for no
-  $hierarchical = 1;      // 1 for yes, 0 for no  
-  $title        = '';  
-  $empty        = 0;
-
-  $args = array(
-   'taxonomy'     => $taxonomy,
-   'orderby'      => $orderby,
-   'show_count'   => $show_count,
-   'pad_counts'   => $pad_counts,
-   'hierarchical' => $hierarchical,
-   'title_li'     => $title,
-   'hide_empty'   => $empty
- );
-  $all_categories = get_categories( $args );
-  foreach ($all_categories as $cat) {
-    if($cat->category_parent == 0) {
-      $category_id = $cat->term_id;       
-      /*echo '<br /><a href="'. get_term_link($cat->slug, 'product_cat') .'">'. $cat->name .'</a>';*/
-
-      $Q2="SELECT * from wp_term_relationships where object_id='$ID'";
-      foreach ($db->query($Q2) as $Row2) {
-        $term_taxonomy_id=$Row2["term_taxonomy_id"];
-        $Q3="SELECT * from wp_terms where term_id = '$term_taxonomy_id' and name!='simple' and name!='featured'";
-        foreach ($db->query($Q3) as $Row3) {
-         if ($Row3["name"]==$cat->name)
-         {
-          $cc+=1;
         }
-      }
-    }
+    });
 
-    if($cc==0)
-    {
-      ?>
-      <option value="<?= $cat->term_id?>" ><?=$cat->name?></option>
-      <?php
-    }else
-    {
-      ?>
-      <option value="<?= $cat->term_id?>" selected><?=$cat->name?></option>
-      <?php
-    }
-    ?>
-    <?php
-
-    $args2 = array(
-      'taxonomy'     => $taxonomy,
-      'child_of'     => 0,
-      'parent'       => $category_id,
-      'orderby'      => $orderby,
-      'show_count'   => $show_count,
-      'pad_counts'   => $pad_counts,
-      'hierarchical' => $hierarchical,
-      'title_li'     => $title,
-      'hide_empty'   => $empty
-    );
-    $sub_cats = get_categories( $args2 );
-    if($sub_cats) {
-      foreach($sub_cats as $sub_category) {
-                //echo  $sub_category->name ;
-      }   
-    }
-  }       
-}
-?>
-</select>
-</div>
-
-
-
-
-<div class="form-group">
-  <label>Fotografías</label>
-  <br>
-  <select title="Fotografías" class="selectpicker form-control" name="PHOTOS[]" multiple>
-    <?php
-    $ID=$_GET["ID"];
-    $imag="";
-    $Q="SELECT * from `wp_postmeta` where `post_id` ='$ID' and `meta_key`='_product_image_gallery'";
-    foreach ($db->query($Q) as $Row) {
-     $imag=$Row["meta_value"];
-     break;
-   }
-   $Q="SELECT * from `wp_postmeta` where `post_id` ='$ID' and `meta_key`='_thumbnail_id'";
-   foreach ($db->query($Q) as $Row) {
-     $imag.=$Row["meta_value"];
-   }
-   $imags=explode(",", $imag);
-              //echo "Hola:".$imags;
-
-   $Q="SELECT * FROM `wp_posts` where post_type='attachment' and ID>$Primero and (post_mime_type='image/jpeg' or post_mime_type='image/png') order by ID DESC";
-   foreach ($db->query($Q) as $Row) {
-    $Nom=$Row["post_title"];
-    $guid=$Row["guid"];
-    $id=$Row["ID"];
-
-    if(in_array($id, $imags))
-    {
-     ?>
-     <option data-content="<img class='img-responsive' width='30px' height='30px'  src='<?=$guid?>'></img> <?=$Nom?>" value='<?=$id?>' selected></option>
-     <?php
-   }else
-   {
-     ?>
-     <option data-content="<img class='img-responsive' width='30px' height='30px'  src='<?=$guid?>'></img> <?=$Nom?>" value='<?=$id?>'></option>
-     <?php
-   }
- }
- ?>                
-</select>
-</div>
-
-
-
-
-<div class="form-group">
-  <label>Precio</label>
-  <input type="number" class="form-control" id="price" name="PRICE" placeholder="Precio" required>
-</div>
-
-<div class="form-group">
-  <label>Descripción Corta</label>
-  <input type="text" class="form-control" id="short" name="SHORT" placeholder="Descripción Corta" required>
-</div>
-<div class="form-group">
-  <label>Descripción larga</label>
-  <textarea class="form-control" id="long" name="LONG" placeholder="Descripción Larga"></textarea>
-</div>
-
-<button type="submit" style="background-color: #b20c23" class="btn btn-success btn-flat m-b-30 m-t-30">Actualizar producto</button>
-<br>
-<br>
-</form>
-</div>
-</div>
-</div>
-</div>
-<?php
-}
-?>
-
-
-
-
-
-</div>
-
-
-
-
-
-
-
-
-</div>
-
-</div>
-
-
-
-
-
-<div class="row">
-  <div class="col-md-12">
-    <div class="card">
-      <div class="card-header">
-        <strong class="card-title">Subir imágenes</strong>
-      </div>
-      <div class="card-body">
-        <div class="dropzone" class="form-control" id="dropzone3"></div>
-
-        <script type="text/javascript">
-
-         Dropzone.autoDiscover = false;
-         var ln = $("#IDENTIFICADOR").val();
-         $("#dropzone3").dropzone({
-          url: 'Controller/Upload.php',
-          acceptedFiles: ".jpeg,.jpg,.png"
+    // Configure Dropzone
+    Dropzone.autoDiscover = false;
+    if ($('#productDropzone').length) {
+        new Dropzone("#productDropzone", {
+            paramName: "file",
+            maxFilesize: 10,
+            acceptedFiles: "image/jpeg,image/png,image/webp,image/gif",
+            success: function(file, response) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Imagen subida correctamente',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            },
+            error: function(file, message) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de subida',
+                    text: typeof message === 'object' ? message.message : message
+                });
+            }
         });
-      </script>
-    </div>
-  </div>
-</div>
-</div>
+    }
 
-</div>
-</div><!-- .animated -->
-</div><!-- .content -->
-<script src="assets/js/lib/data-table/datatables.min.js"></script>
-<script src="assets/js/lib/data-table/dataTables.bootstrap.min.js"></script>
-<script src="assets/js/lib/data-table/dataTables.buttons.min.js"></script>
-<script src="assets/js/lib/data-table/buttons.bootstrap.min.js"></script>
-<script src="assets/js/lib/data-table/jszip.min.js"></script>
-<script src="assets/js/lib/data-table/vfs_fonts.js"></script>
-<script src="assets/js/lib/data-table/buttons.html5.min.js"></script>
-<script src="assets/js/lib/data-table/buttons.print.min.js"></script>
-<script src="assets/js/lib/data-table/buttons.colVis.min.js"></script>
-<script src="assets/js/init/datatables-init.js"></script>
+    // Handle Edit Click
+    $(document).on('click', '.btn-edit', function() {
+        const id = $(this).data('id');
+        Swal.fire({
+            title: 'Cargando producto...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
 
+        $.getJSON('api/products.php', { id: id }, function(res) {
+            Swal.close();
+            if (res.success && res.data) {
+                $('#edit_id').val(res.data.ID);
+                $('#edit_name').val(res.data.post_title);
+                $('#edit_price').val(res.data.price);
+                $('#edit_short').val(res.data.post_excerpt);
+                $('#edit_long').val(res.data.post_content);
+                $('#edit_photo').val(res.data.thumbnail_id || 0);
+                $('#modalEditProduct').modal('show');
+            } else {
+                Swal.fire('Error', res.message || 'No se pudo cargar el producto', 'error');
+            }
+        }).fail(function() {
+            Swal.close();
+            Swal.fire('Error', 'Error de conexion con el servidor', 'error');
+        });
+    });
 
-<script type="text/javascript">
-  $(document).ready(function() {
-    $('#bootstrap-data-table-export').DataTable();
-  } );
+    // Handle Delete Click
+    $(document).on('click', '.btn-delete', function() {
+        const id = $(this).data('id');
+        const name = $(this).data('name');
+
+        Swal.fire({
+            title: '¿Eliminar producto?',
+            text: `¿Estas seguro de eliminar "${name}" (#${id})? Esta accion no se puede deshacer.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Si, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $('#delete_id').val(id);
+                $('#formDeleteProduct').submit();
+            }
+        });
+    });
+});
 </script>
-<?php
-require_once "Layouts/Footer.php";
-?>

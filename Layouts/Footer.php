@@ -1,51 +1,70 @@
-</div>
-            <!-- .animated -->
-        </div>
-        <!-- /.content -->
-        <div class="clearfix"></div>
-        <!-- Footer -->
-        <footer class="site-footer">
-            <div class="footer-inner bg-white">
-                <div class="row">
-                    <div class="col-sm-6">
-                        Copyright &copy; 2020 
-                    </div>
-                    <div style="display: none;" class="col-sm-6 text-right">
-                        Desarrollado por <a href="<?=$Web_Autor?>"><?=$Autor_Sitio?></a>
-                    </div>
+            </div><!-- /.animated -->
+        </div><!-- /.content -->
+
+        <footer class="site-footer bg-white border-top py-3 px-4 mt-auto">
+            <div class="row align-items-center">
+                <div class="col-sm-6 text-muted small">
+                    &copy; <?=date('Y')?> <strong>WooCommerce Fast Admin</strong>. Desarrollado por <a href="https://github.com/KevinAndrey96" target="_blank" rel="noopener">Kevin Andrey Herrera</a>.
+                </div>
+                <div class="col-sm-6 text-sm-right text-muted small">
+                    <span class="badge badge-light border">PHP 8.2+ Ready</span>
+                    <span class="badge badge-light border">WooCommerce Compatible</span>
                 </div>
             </div>
         </footer>
-        <!-- /.site-footer -->
-    </div>
-    <!-- /#right-panel -->
+    </div><!-- /#right-panel -->
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@2.2.4/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.4/dist/umd/popper.min.js"></script>
-    <!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js"></script>-->
-    <script src="https://cdn.jsdelivr.net/npm/jquery-match-height@0.7.2/dist/jquery.matchHeight.min.js"></script>
+    <!-- Core Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="assets/js/main.js"></script>
 
-    <!--  Chart js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.7.3/dist/Chart.bundle.min.js"></script>
+    <script>
+    // Universal URL query notification handler
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const success = urlParams.get('success');
+        const error = urlParams.get('error');
 
-    <!--Chartist Chart-->
-    <script src="https://cdn.jsdelivr.net/npm/chartist@0.11.0/dist/chartist.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartist-plugin-legend@0.6.2/chartist-plugin-legend.min.js"></script>
+        const toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3500,
+            timerProgressBar: true
+        });
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery.flot@0.8.3/jquery.flot.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flot-pie@1.0.0/src/jquery.flot.pie.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flot-spline@0.0.1/js/jquery.flot.spline.min.js"></script>
+        if (success) {
+            let msg = 'Accion realizada exitosamente.';
+            if (success === 'created') msg = 'Producto creado con exito.';
+            if (success === 'updated') msg = 'Producto actualizado con exito.';
+            if (success === 'deleted') msg = 'Producto eliminado con exito.';
+            if (success === 'status_updated') msg = 'Estado de pedido actualizado con exito.';
 
-    <script src="https://cdn.jsdelivr.net/npm/simpleweather@3.1.0/jquery.simpleWeather.min.js"></script>
-    <script src="assets/js/init/weather-init.js"></script>
+            toast.fire({
+                icon: 'success',
+                title: msg
+            });
 
-    <script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/moment.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@3.9.0/dist/fullcalendar.min.js"></script>
-    <script src="assets/js/init/fullcalendar-init.js"></script>
+            // Clean query string from URL without reload
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
 
-    <!--Local Stuff-->
-
+        if (error) {
+            toast.fire({
+                icon: 'error',
+                title: decodeURIComponent(error)
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    });
+    </script>
 </body>
 </html>
