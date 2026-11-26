@@ -1,11 +1,9 @@
-# PHP & Server Logs
+/vendor/
+/.phpunit.cache/
+/.php-cs-fixer.cache
+.env
 *.log
 error_log
-.env
-
-# OS and Editor Files
 .DS_Store
-Thumbs.db
 .idea/
 .vscode/
-*.swp

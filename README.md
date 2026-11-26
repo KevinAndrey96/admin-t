@@ -1,192 +1,136 @@
-# WooCommerce Fast Admin (woo-php-admin-panel)
+# Panel administrativo para WooCommerce en PHP
 
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%20%7C%208.2%20%7C%208.3-777bb4?logo=php&logoColor=white)](https://www.php.net/)
-[![WooCommerce](https://img.shields.io/badge/WooCommerce-Compatible-96588a?logo=woocommerce&logoColor=white)](https://woocommerce.com/)
-[![Docker Ready](https://img.shields.io/badge/Docker-Compose%20Ready-2496ed?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Database](https://img.shields.io/badge/Database-MySQL%20%7C%20MariaDB-4479a1?logo=mysql&logoColor=white)](https://mariadb.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/KevinAndrey96/php-woocommerce-admin-panel/actions/workflows/ci.yml/badge.svg)](https://github.com/KevinAndrey96/php-woocommerce-admin-panel/actions/workflows/ci.yml)
+![PHP 8.3+](https://img.shields.io/badge/PHP-8.3%20%7C%208.4%20%7C%208.5-777BB4?logo=php&logoColor=white)
+![WooCommerce REST API](https://img.shields.io/badge/WooCommerce-REST%20API%20v3-7F54B3?logo=woocommerce&logoColor=white)
+![PHPStan nivel max](https://img.shields.io/badge/PHPStan-nivel%20max-4F5B93)
+![Docker](https://img.shields.io/badge/Docker-listo-2496ED?logo=docker&logoColor=white)
 
-Micropanel administrativo y panel de control de pedidos independiente, rapido y seguro para tiendas **WooCommerce** y **WordPress**.
+**Panel de administración independiente (back-office) para tiendas WooCommerce**, escrito en PHP 8.3+ sin framework. Permite al equipo de una tienda revisar las ventas del mes, atender pedidos y mantener el catálogo de productos desde una interfaz rápida, clara y en español, sin entrar al escritorio de WordPress.
 
----
+Se conecta **solo por la API REST oficial de WooCommerce y WordPress**, con las contraseñas de aplicación de cada persona. No necesita acceso a la base de datos de la tienda ni instalar plugins.
 
-## 📌 ¿Por que existe este proyecto?
+![Resumen del mes con ventas, pedidos por atender y productos agotados](docs/capturas/resumen.png)
 
-El panel oficial de administracion de WordPress (`wp-admin`) suele volverse excesivamente lento y pesado a medida que se instalan plugins, temas complejos, constructores visuales y herramientas de analitica. Para personal operativo como cajeros, bodegueros, operarios de despacho o atencion al cliente, acceder a `wp-admin`:
-1. Sobrecarga el servidor web al ejecutar todo el ciclo de vida de plugins en cada peticion.
-2. Expone configuraciones criticas del CMS a usuarios que solo necesitan despachar ordenes o ajustar inventario.
-3. Ralentiza el flujo de despacho diario con interfaces sobrecargadas.
+## Qué hace
 
-**`woo-php-admin-panel`** resuelve este problema ofreciendo una interfaz ligera, desacoplada y de alto rendimiento que interactua directamente sobre la base de datos de WooCommerce con consultas optimizadas mediante JOINs indexados y sentencias preparadas (PDO).
+- **Resumen del mes:** ventas, número de pedidos, pedidos por atender, productos agotados, últimos pedidos y conteo por estado.
+- **Pedidos:** búsqueda por número, nombre, correo o teléfono; filtro por estado; paginación; detalle con artículos, envío, descuentos, datos de facturación y envío, y nota del cliente.
+- **Gestión de pedidos:** cambio de estado (WooCommerce envía los correos que tenga activos) y notas internas o visibles para el cliente.
+- **Productos:** búsqueda por nombre o SKU, filtro por existencias, creación y edición de productos simples (precio normal y de oferta, SKU, inventario, estado de publicación, descripción corta) y envío a la papelera de WordPress.
+- **Imágenes:** subida validada (JPG, PNG o WebP de máximo 5 MB, tipo real detectado con `finfo`) a la biblioteca de medios de WordPress.
+- **Diseño adaptable:** en el celular las tablas se convierten en tarjetas legibles.
 
----
+| Detalle de un pedido | Pedidos en el celular |
+| :---: | :---: |
+| ![Detalle de pedido con artículos, cliente, cambio de estado y notas](docs/capturas/pedido.png) | ![Lista de pedidos en un celular, en formato de tarjetas](docs/capturas/pedidos-movil.png) |
 
-## 🚀 Caracteristicas Principales
+![Lista de productos con precio, estado de publicación y existencias](docs/capturas/productos.png)
 
-- **Despacho y Gestion de Pedidos en Tiempo Real:**
-  - Visualizacion rapida de ordenes con identificador, fecha, datos del cliente, estado y total.
-  - Modal interactivo con desglose de productos comprados, cantidades, precios unitarios y subtotales.
-  - Actualizacion de estado en un clic: Completado (`wc-completed`), En Proceso (`wc-processing`), En Espera (`wc-on-hold`), Cancelado (`wc-cancelled`) y Papelera (`trash`).
-- **Control de Inventario y Catalogo de Productos:**
-  - Listado de productos con miniaturas, nombres, categorias, precios y descripciones.
-  - Creacion y actualizacion de productos con generacion automatica de slugs y meta-campos (`_price`, `_regular_price`, `_thumbnail_id`).
-  - Eliminacion segura en transaccion que limpia entradas en `wp_posts`, `wp_postmeta` y relaciones taxonomicas.
-- **Biblioteca de Medios Integrada (Dropzone.js):**
-  - Carga arrastrar-y-soltar de imagenes (JPG, PNG, WEBP, GIF).
-  - Registro automatico como adjunto (`post_type='attachment'`) en la biblioteca multimedia de WordPress.
-- **Autenticacion Nativa Multi-Algoritmo:**
-  - Verificacion directa contra la tabla `wp_users`.
-  - Soporte nativo para hashes portables de WordPress (algoritmo PHPass `$P$` y `$H$`), `password_verify` (bcrypt) y fallback para entornos de desarrollo.
-- **Consultas de Alto Rendimiento:**
-  - Elimina el problema de consultas N+1 en bucles gracias a consultas unificadas con `LEFT JOIN` e indices de WordPress.
-- **Seguridad Robusta:**
-  - PDO con sentencias preparadas al 100%.
-  - Tokens CSRF en todos los formularios y llamadas API.
-  - Sanitizacion y escape contextual de entradas y salidas HTML (XSS prevention).
-  - Control de sesiones seguro con cookies `HttpOnly` y `SameSite`.
-- **Doble Modo de Despliegue:**
-  - **Modo Standalone:** Ejecutalo en su propio contenedor Docker, VPS o subdominio conectandose remotamente a la base de datos MySQL/MariaDB de la tienda.
-  - **Modo Embebido:** Ubicalo en una subcarpeta (por ejemplo `/admin/` o `/panel/`) dentro del arbol de WordPress para heredar automaticamente la conexion de `wp-config.php`.
+## Por qué la API REST y no la base de datos
 
----
+Muchos paneles externos para WooCommerce leen y escriben directo en las tablas `wp_posts` y `wp_postmeta`. Eso trae tres problemas:
 
-## 🛠️ Arquitectura del Proyecto
+1. **Se salta la lógica de WooCommerce:** no se descuentan existencias, no se envían correos de estado, no se recalculan tablas de búsqueda ni se ejecutan los hooks de otros plugins.
+2. **Se rompe con HPOS:** desde WooCommerce 8 los pedidos viven en tablas propias (`wc_orders`), así que las consultas a `wp_posts` devuelven datos viejos o vacíos.
+3. **Exige credenciales de la base de datos** en un servidor adicional.
 
-```
-woo-php-admin-panel/
-├── api/                       # Endpoints JSON RESTful para AJAX y servicios externos
-│   ├── orders.php             # Consulta de detalle de pedido y actualizacion de estado
-│   ├── products.php           # CRUD completo de productos
-│   └── upload.php             # Receptor de carga de archivos Dropzone
-├── assets/                    # Hojas de estilo, fuentes y scripts del tema Ela Admin
-├── Controller/                # Capa de compatibilidad retroactiva para rutas legacy
-│   ├── AddProduct.php
-│   ├── DeleteProduct.php
-│   ├── GetProduct.php
-│   ├── GetProductsTx.php
-│   ├── GetTransaction.php
-│   ├── Login.php
-│   ├── Status.php
-│   ├── UpdateProduct.php
-│   └── Upload.php
-├── database/                  # Esquema de base de datos de prueba autocontenido
-│   └── schema.sql             # Estructura WooCommerce minima con datos demo
-├── images/                    # Logos, avatares y recursos graficos
-├── Layouts/                   # Plantillas modulares de encabezado y pie de pagina
-│   ├── Header.php             # Barra lateral, topbar, alertas y metas
-│   └── Footer.php             # Scripts, DataTables y gestor de notificaciones Toast
-├── src/                       # Codigo fuente orientado a objetos (PSR-4 App\)
-│   ├── Config/
-│   │   └── Database.php       # Fabrica Singleton de conexion PDO (.env / wp-config)
-│   ├── Helpers/
-│   │   ├── Format.php         # Moneda, fechas legibles y badges de estado
-│   │   └── Security.php       # Validacion CSRF, sanitizacion y generador de slugs
-│   ├── Services/
-│   │   ├── AuthService.php    # Verificacion PHPass/bcrypt y control de sesion
-│   │   ├── OrderService.php   # Consultas JOIN de ordenes, metricas y estados
-│   │   ├── ProductService.php # CRUD de productos e integracion taxonomica
-│   │   └── UploadService.php  # Validacion MIME y registro multimedia en wp_posts
-│   └── bootstrap.php          # Inicializador, variables de entorno y helpers globales
-├── dashboard.php              # Vista principal: metricas KPI y catalogo de productos
-├── transactions.php           # Vista de pedidos: historial de ventas y modal de detalle
-├── index.php                  # Pantalla de inicio de sesion moderna con CSRF
-├── logout.php                 # Cierre seguro de sesion y destruccion de cookies
-├── docker-compose.yml         # Entorno Docker listo para produccion o desarrollo
-├── .env.example               # Plantilla de variables de entorno
-└── composer.json              # Definicion de dependencias y mapeo de namespaces
+Este panel usa los endpoints `wc/v3/*` y `wp/v2/*`. Así respeta las reglas de la tienda, funciona con HPOS y con cualquier hosting, y deja en el historial del pedido quién hizo cada cambio.
+
+## Seguridad
+
+| Riesgo | Medida |
+| :--- | :--- |
+| Credenciales compartidas | Cada persona ingresa con **su usuario de WordPress y una contraseña de aplicación** propia, que puede revocar en cualquier momento. WordPress verifica la capacidad `manage_woocommerce` (roles *Gestor de la tienda* y *Administrador*). |
+| Robo de sesión | La contraseña de aplicación se guarda en la sesión **cifrada con libsodium** (`APP_KEY`); la cookie es `HttpOnly`, `SameSite=Lax` y `Secure`. Se regenera el ID al ingresar y la sesión vence tras 30 minutos de inactividad u 8 horas en total. |
+| Fuerza bruta | Bloqueo de 15 minutos tras 5 intentos fallidos, por IP y por usuario. |
+| CSRF | Token por sesión en todos los formularios y comparación en tiempo constante. |
+| XSS y clickjacking | Escape de toda salida, Content Security Policy sin scripts ni estilos en línea, `X-Frame-Options: DENY`, `nosniff` y `Referrer-Policy`. |
+| Subidas maliciosas | Se valida el tipo real del archivo y que sea una imagen; el nombre se normaliza y solo se aceptan archivos subidos por la petición actual. |
+| Fallos de red | Tiempos de espera en cada llamada; reintentos con espera creciente solo en operaciones idempotentes (GET, PUT, DELETE), nunca en POST, para no duplicar notas ni productos. |
+
+## Arquitectura
+
+Arquitectura limpia en capas, sin dependencias en producción (solo extensiones estándar de PHP):
+
+```text
+src/
+├── Domain/          Pedido, producto, estados, dinero y validación de borradores (sin I/O)
+├── Application/     Puertos (interfaces), consultas, errores de la tienda y caso de uso SaveProduct
+├── Infrastructure/
+│   ├── Http/            Cliente HTTP con cURL detrás de una interfaz
+│   ├── WooCommerce/     Cliente REST con reintentos, mapeo de recursos y gateways
+│   └── Security/        Bóveda de credenciales (libsodium) y limitador de intentos
+├── Http/            Front controller, rutas, sesión, CSRF y controladores
+└── View/            Plantillas PHP con escape obligatorio
+templates/           Vistas en español
+public/              index.php, CSS y JavaScript de mejora progresiva
+docker/              Apache, PHP, tienda demo con WP-CLI y prueba de extremo a extremo
 ```
 
----
+```mermaid
+flowchart LR
+    U[Equipo de la tienda] -->|HTTPS| P[Panel PHP]
+    P -->|Basic auth con contraseña de aplicación| W[WordPress REST API]
+    W --> WC[WooCommerce wc/v3]
+    WC --> DB[(Base de datos de la tienda)]
+```
 
-## 🐳 Inicio Rapido con Docker Compose
+Los controladores solo conocen interfaces (`OrderGateway`, `ProductGateway`, `ReportGateway`, `MediaGateway`, `StoreConnector`), por eso las pruebas usan implementaciones en memoria y el panel podría conectarse a otra fuente sin tocar la interfaz.
 
-El repositorio incluye un archivo `docker-compose.yml` que levanta la aplicacion en PHP 8.2 junto con una base de datos MariaDB 10.11 pre-cargada con datos de prueba (productos y ordenes de ejemplo) y phpMyAdmin.
+## Puesta en marcha local
 
-1. **Clonar el repositorio:**
-   ```bash
-   git clone git@github.com:KevinAndrey96/woo-php-admin-panel.git
-   cd woo-php-admin-panel
-   ```
+Requisitos: Docker y `make`.
 
-2. **Crear archivo de entorno local (opcional):**
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+make up            # crea .env con APP_KEY, levanta WordPress + WooCommerce con datos demo y el panel
+make credentials   # muestra el usuario y la contraseña de aplicación para ingresar
+```
 
-3. **Iniciar los contenedores:**
-   ```bash
-   docker compose up -d
-   ```
+- Panel: <http://localhost:8080>
+- Tienda demo: <http://localhost:8081> (WordPress 7, WooCommerce, pesos colombianos y español de Colombia)
 
-4. **Acceder a los servicios:**
-   - **Panel Administrativo:** [http://localhost:8085](http://localhost:8085)
-   - **phpMyAdmin:** [http://localhost:8086](http://localhost:8086)
+El contenedor `store-setup` instala la tienda con WP-CLI, crea productos y pedidos de ejemplo y genera una contraseña de aplicación nueva en cada arranque.
 
-5. **Credenciales de prueba:**
-   - **Usuario:** `admin`
-   - **Contrasena:** `admin123`
+## Despliegue
 
----
+1. La tienda debe responder por **HTTPS** (WordPress solo habilita las contraseñas de aplicación con SSL) y tener los enlaces permanentes activos para que exista `/wp-json/`.
+2. Construye la imagen con `docker build -t panel-tienda .`; corre como `www-data` en el puerto 8080 y expone `/healthz` para el balanceador.
+3. Configura las variables de entorno:
 
-## ⚙️ Variables de Entorno
+| Variable | Obligatoria | Descripción |
+| :--- | :---: | :--- |
+| `WOOCOMMERCE_URL` | Sí | URL de la tienda vista desde el servidor del panel. |
+| `WOOCOMMERCE_PUBLIC_URL` | No | URL pública para enlaces e imágenes; por defecto la anterior. |
+| `APP_KEY` | Sí | 32 bytes aleatorios en base64 (`make key`). Cambiarla cierra todas las sesiones. |
+| `STORE_NAME` | No | Nombre que se muestra en el panel. |
+| `APP_TIMEZONE` | No | Zona horaria de las fechas; por defecto `America/Bogota`. |
+| `APP_SECURE_COOKIES` | No | `false` solo en desarrollo local sin HTTPS. |
+| `APP_TRUST_PROXY` | No | `true` solo detrás de un proxy que fije `X-Forwarded-Proto`. |
+| `APP_STORAGE` | No | Carpeta de sesiones y del limitador; compartida si hay varias réplicas. |
 
-Si utilizas el modo Standalone o despliegas en un servidor PHP independiente, puedes configurar la conexion mediante variables de entorno o en el archivo `.env`:
+Cada integrante crea su contraseña de aplicación en *Usuarios → Perfil → Contraseñas de aplicación* y la usa para ingresar.
 
-| Variable | Descripcion | Valor por Defecto |
-| :--- | :--- | :--- |
-| `APP_NAME` | Nombre visible del panel en la barra superior | `WooCommerce Fast Admin` |
-| `APP_ENV` | Entorno de ejecucion (`production` o `development`) | `production` |
-| `APP_TIMEZONE` | Zona horaria del servidor | `America/Bogota` |
-| `DB_HOST` | Host o IP del servidor MySQL / MariaDB | `db` o `localhost` |
-| `DB_PORT` | Puerto de conexion a la base de datos | `3306` |
-| `DB_NAME` | Nombre de la base de datos de WordPress | `ufun` |
-| `DB_USER` | Usuario de base de datos con permisos SELECT/INSERT/UPDATE | `ufun_user` |
-| `DB_PASSWORD` | Contrasena del usuario de base de datos | `ufun_password` |
-| `DB_CHARSET` | Codificacion de caracteres de la base de datos | `utf8mb4` |
-| `DB_TABLE_PREFIX` | Prefijo de tablas de WordPress | `wp_` |
+## Pruebas y calidad
 
----
+```bash
+make install   # dependencias de desarrollo con Composer en Docker
+make check     # PHP CS Fixer (PER-CS 2.0), PHPStan nivel max con reglas estrictas y PHPUnit
+make e2e       # flujo completo contra la tienda demo levantada con make up
+```
 
-## 🔌 Instalacion Embebida (Dentro de WordPress)
+- **101 pruebas unitarias y HTTP:** validación de productos y precios, mapeo de recursos REST, reintentos y manejo de errores del cliente, cifrado de la sesión, limitador de intentos, CSRF, vencimiento de sesión, permisos y escape de datos.
+- **Prueba de extremo a extremo** en CI contra un WordPress con WooCommerce real: ingreso, resumen, cambio de estado, notas, creación y envío a la papelera de un producto, rechazo de formularios sin token y cierre de sesión.
+- CI en PHP 8.3, 8.4 y 8.5; Dependabot para Composer, Docker y GitHub Actions.
 
-Si deseas alojar este panel directamente dentro de un sitio WordPress existente:
+## Historia del proyecto
 
-1. Copia la carpeta `woo-php-admin-panel` dentro de la raiz publica de WordPress y renombrala a tu conveniencia (por ejemplo, `tienda-admin`):
-   ```bash
-   cp -r woo-php-admin-panel /var/www/html/tienda-admin
-   ```
-2. La clase `App\Config\Database` detectara de forma automatica el archivo `wp-config.php` del directorio superior y adoptara los datos de conexion de la tienda sin necesidad de configurar ningun archivo `.env`.
-3. Abre en tu navegador `https://tutienda.com/tienda-admin` e inicia sesion con tu cuenta de administrador o gestor de tienda de WordPress.
+La primera versión (2021, *AdminT v1.2*) fue un panel a la medida para la tienda WooCommerce de un cliente: leía las tablas de WordPress con SQL armado a mano y se apoyaba en una plantilla de administración de terceros. En 2026 lo reescribí desde cero sobre la API REST, con arquitectura limpia, pruebas automatizadas y prácticas de seguridad actuales. La versión original queda en la etiqueta `v0.1-legacy` como referencia.
 
----
+## Autor
 
-## 📡 Referencia de la API Interna
+**Kevin Andrey Herrera Silva**, desarrollador backend. [GitHub](https://github.com/KevinAndrey96)
 
-Todos los endpoints responden en formato JSON con cabeceras `Content-Type: application/json; charset=utf-8` y codigos de estado HTTP estandar (200, 400, 401, 404, 500). Requieren sesion activa autenticada.
+## Licencia
 
-### Productos (`api/products.php`)
-- `GET ?id={ID}`: Obtiene el detalle completo del producto (nombre, precio, descripcion corta, contenido, miniatura y categorias).
-- `POST action=create`: Crea un nuevo producto recibiendo `NAME`, `PRICE`, `SHORT`, `LONG`, `FOTO`.
-- `POST action=update`: Actualiza un producto existente recibiendo `id`, `NAME`, `PRICE`, `SHORT`, `LONG`, `FOTO`.
-- `POST action=delete`: Elimina el producto y limpia sus registros dependientes en `wp_postmeta`.
-
-### Pedidos (`api/orders.php`)
-- `GET ?id={ID}`: Devuelve los datos del comprador (nombre, email, telefono, direccion, ciudad, IP) y el listado de articulos comprados (`items`).
-- `POST action=status`: Actualiza el estado del pedido recibiendo `id` y `status` (valida estados permitidos de WooCommerce).
-
-### Carga de Archivos (`api/upload.php`)
-- `POST`: Sube una imagen mediante Dropzone (`multipart/form-data`) y devuelve el ID del adjunto generado en `wp_posts` y la URL publica (`guid`).
-
----
-
-## 👨‍💻 Autor
-
-- **Kevin Andrey Herrera Silva**
-- GitHub: [@KevinAndrey96](https://github.com/KevinAndrey96)
-- Correo: `kahs_kevin@hotmail.com`
-
----
-
-## 📄 Licencia
-
-Este proyecto se distribuye bajo la licencia **MIT**. Eres libre de usarlo, modificarlo y distribuirlo en proyectos personales o comerciales.
+Sin licencia de código abierto. El proyecto nació como trabajo para un cliente y se publica como muestra de portafolio: todos los derechos reservados.
