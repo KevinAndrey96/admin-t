@@ -58,7 +58,7 @@ services:
         condition: service_healthy
 
   db:
-    image: mariadb:11.8
+    image: mariadb:13.0
     environment:
       MARIADB_DATABASE: wordpress
       MARIADB_USER: wordpress
